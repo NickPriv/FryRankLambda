@@ -4,22 +4,11 @@ import com.fryrank.model.*;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.aggregation.Aggregation;
-import org.springframework.data.mongodb.core.aggregation.AggregationResults;
-import org.springframework.data.mongodb.core.aggregation.GroupOperation;
-import org.springframework.data.mongodb.core.aggregation.MatchOperation;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import static org.springframework.data.mongodb.core.aggregation.Aggregation.*;
 
 @Repository
 public class ReviewDALImpl implements ReviewDAL {
@@ -37,37 +26,5 @@ public class ReviewDALImpl implements ReviewDAL {
         final List<Review> reviews = mongoTemplate.find(query, Review.class);
 
         return new GetAllReviewsOutput(reviews);
-    }
-
-    @Override
-    public GetAggregateReviewInformationOutput getAggregateReviewInformationForRestaurants(@NonNull final List<String> restaurantIds, @NonNull final AggregateReviewFilter aggregateReviewFilter) {
-        final Query query = new Query().addCriteria(Criteria.where(RESTAURANT_ID_KEY).in(restaurantIds));
-
-        Map<String, AggregateReviewInformation> restaurantIdToAggregateReviewInformation = new HashMap<String, AggregateReviewInformation>();
-
-        final Criteria includeRestaurantIdsCriteria = Criteria.where(RESTAURANT_ID_KEY).in(restaurantIds);
-        final MatchOperation filterToRestaurantId = match(includeRestaurantIdsCriteria);
-        final GroupOperation averageScoreGroupOperation = group(RESTAURANT_ID_KEY).avg("score").as("avgScore");
-        final Aggregation aggregation = newAggregation(filterToRestaurantId, averageScoreGroupOperation);
-        final AggregationResults<AggregateReviewInformation> result = mongoTemplate.aggregate(aggregation, "review", AggregateReviewInformation.class);
-        final List<AggregateReviewInformation> aggregateReviewInformationList = result.getMappedResults();
-
-        aggregateReviewInformationList.stream().forEach(
-                aggregateReviewInformation -> {
-                    final Float averageScore = aggregateReviewFilter.getIncludeRating()
-                            ? BigDecimal.valueOf(aggregateReviewInformation.getAvgScore()).setScale(1, RoundingMode.DOWN).floatValue()
-                            : null;
-
-                    restaurantIdToAggregateReviewInformation.put(aggregateReviewInformation.getRestaurantId(), new AggregateReviewInformation(aggregateReviewInformation.getRestaurantId(), averageScore));
-                }
-        );
-
-        return new GetAggregateReviewInformationOutput(restaurantIdToAggregateReviewInformation);
-    }
-
-    @Override
-    public Review addNewReview(@NonNull final Review review) {
-        mongoTemplate.save(review);
-        return review;
     }
 }

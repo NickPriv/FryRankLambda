@@ -14,7 +14,6 @@ import java.util.List;
 
 import static com.fryrank.TestConstants.TEST_RESTAURANT_ID;
 import static com.fryrank.TestConstants.TEST_REVIEWS;
-import static com.fryrank.TestConstants.TEST_REVIEW_1;
 import static com.fryrank.dal.ReviewDALImpl.RESTAURANT_ID_KEY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -57,12 +56,5 @@ public class ReviewDALTests {
     @Test
     public void testGetAllReviewsByRestaurantId_nullRestaurantId() {
         assertThrows(NullPointerException.class, () -> reviewDAL.getAllReviewsByRestaurantId(null));
-    }
-
-    @Test
-    public void testAddNewReview() throws Exception {
-        final Review expectedReview = TEST_REVIEW_1;
-        final Review actualReview = reviewDAL.addNewReview(expectedReview);
-        assertEquals(expectedReview, actualReview);
     }
 }
